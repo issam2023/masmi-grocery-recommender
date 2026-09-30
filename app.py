@@ -61,14 +61,7 @@ except (ValueError, KeyError, TypeError, OSError) as exc:
     st.error(f"Could not read the saved data: {exc}")
     st.stop()
 
-st.markdown('''<div class="hero">
-<div class="tag">ASSOCIATION RULES · APRIORI</div>
-<h1>Grocery Recommendation System</h1>
-<p style="color:#ffffff !important; font-size:1.2rem;">
-<strong>Created by Abdelhafid Masmi</strong>
-</p>
-<p>Select products, discover recommendations, and apply matching rules.</p>
-</div>''', unsafe_allow_html=True)
+st.markdown('<style>\n.masmi-banner {\ndisplay:flex; align-items:center; gap:32px; flex-wrap:wrap;\nbackground:linear-gradient(120deg,#102b50,#164b7a);\npadding:32px; border-radius:24px; margin-bottom:24px;\n}\n.masmi-circle {\nwidth:180px; height:180px; flex-shrink:0;\nborder-radius:50%; background:#1769e0;\nborder:5px solid #8cc8ff;\nbox-shadow:0 8px 24px #00000040;\ndisplay:flex; flex-direction:column;\nalign-items:center; justify-content:center;\ntext-align:center;\n}\n.masmi-circle span {\ncolor:#ffffff !important;\nfont-size:24px; font-weight:800; line-height:1.3;\n}\n.masmi-circle small {\ncolor:#ffffff !important;\nfont-size:13px; margin-bottom:10px; letter-spacing:2px;\n}\n.masmi-banner h1 {\ncolor:#ffffff !important;\nfont-size:clamp(26px,3vw,40px); line-height:1.15;\n}\n.masmi-banner p {\ncolor:#e0efff !important; font-size:17px;\n}\n</style>\n<div class="masmi-banner">\n<div class="masmi-circle">\n<small>CREATED BY</small>\n<span>Abdelhafid<br>Masmi</span>\n</div>\n<div style="flex:1; min-width:220px;">\n<h1>Grocery Recommendation System</h1>\n<p>Select your products. Discover useful suggestions.<br>\nApply a rule to complete your basket.</p>\n</div>\n</div>', unsafe_allow_html=True)
 st.caption("Synthetic grocery data · Association rules · Abdelhafid Masmi")
 a,b,c = st.columns(3)
 a.metric("Shopping baskets", f"{transaction_count:,}")
