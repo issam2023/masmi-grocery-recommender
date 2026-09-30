@@ -61,8 +61,14 @@ except (ValueError, KeyError, TypeError, OSError) as exc:
     st.error(f"Could not read the saved data: {exc}")
     st.stop()
 
-st.markdown('''<div class="hero"><div class="tag">ÉPICERIE LAURENTIENNE · MARKET BASKET LAB</div>
-<h1>Build a basket. Apply a rule.</h1><p>A practical grocery recommendation lab by Abdelhafid Masmi.</p></div>''', unsafe_allow_html=True)
+st.markdown('''<div class="hero">
+<div class="tag">ASSOCIATION RULES · APRIORI</div>
+<h1>Grocery Recommendation System</h1>
+<p style="color:#ffffff !important; font-size:1.2rem;">
+<strong>Created by Abdelhafid Masmi</strong>
+</p>
+<p>Select products, discover recommendations, and apply matching rules.</p>
+</div>''', unsafe_allow_html=True)
 st.caption("Synthetic grocery data · Association rules · Abdelhafid Masmi")
 a,b,c = st.columns(3)
 a.metric("Shopping baskets", f"{transaction_count:,}")
