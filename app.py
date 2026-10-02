@@ -187,3 +187,36 @@ with st.expander("Explore the saved rules"):
     st.dataframe(pd.DataFrame(preview),hide_index=True,width="stretch")
     st.caption("Showing up to 100 rules, ranked by lift.")
     st.download_button("Download saved rules JSON",data=rule_path.read_bytes(),file_name="association_rules.json",mime="application/json")
+
+# BEGIN CLEAR BUTTON STYLE
+
+st.markdown("""
+<style>
+.stApp {background:#f8fafc !important; color:#172b4d !important;}
+section[data-testid="stSidebar"] {background:#e8eef7 !important;}
+
+div[data-testid="stButton"] button,
+div[data-testid="stDownloadButton"] button {
+    background:#174ea6 !important;
+    border:2px solid #174ea6 !important;
+    color:white !important;
+    min-height:48px;
+    border-radius:10px;
+}
+div[data-testid="stButton"] button *,
+div[data-testid="stDownloadButton"] button * {
+    color:white !important;
+    font-weight:700 !important;
+}
+div[data-testid="stButton"] button:hover,
+div[data-testid="stDownloadButton"] button:hover {
+    background:#103675 !important;
+    border-color:#103675 !important;
+}
+div[data-testid="stButton"] button:focus-visible {
+    outline:3px solid #f59e0b !important;
+    outline-offset:3px;
+}
+</style>
+""", unsafe_allow_html=True)
+# END CLEAR BUTTON STYLE
