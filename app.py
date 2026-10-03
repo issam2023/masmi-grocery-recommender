@@ -5,7 +5,7 @@ import pandas as pd
 import altair as alt
 import streamlit as st
 
-st.set_page_config(page_title="Masmi | Grocery recommender v1", page_icon="🛒", layout="wide")
+st.set_page_config(page_title="Masmi | Grocery recommender v2", page_icon="🛒", layout="wide")
 st.markdown('''<style>
 .stApp {background: #f7f8f4; color: #173e34;}
 .stApp p, .stApp label {color: #173e34;}
@@ -19,6 +19,13 @@ div[data-testid="stMetric"] {background:white; border:1px solid #e1e8df; border-
 .tag {font-size:12px; letter-spacing:2px; color:#c8d8aa;}
 footer {visibility:hidden;}
 </style>''', unsafe_allow_html=True)
+st.markdown("""<style>
+.stApp {background:#f8fafc; color:#172b4d;}
+.stApp p,.stApp label,h1,h2,h3 {color:#172b4d;}
+div[data-testid="stButton"] button,div[data-testid="stDownloadButton"] button {background:#174ea6 !important;color:white !important;border:2px solid #174ea6 !important;min-height:46px;border-radius:10px;}
+div[data-testid="stButton"] button p,div[data-testid="stDownloadButton"] button p {color:white !important;font-weight:700;}
+div[data-testid="stButton"] button:hover {background:#10366f !important;border-color:#10366f !important;}
+</style>""", unsafe_allow_html=True)
 ROOT = Path(__file__).resolve().parent
 
 @st.cache_data
@@ -63,7 +70,7 @@ except (ValueError, KeyError, TypeError, OSError) as exc:
     st.stop()
 
 st.markdown('<style>\n.masmi-banner {\ndisplay:flex; align-items:center; gap:32px; flex-wrap:wrap;\nbackground:linear-gradient(120deg,#102b50,#164b7a);\npadding:32px; border-radius:24px; margin-bottom:24px;\n}\n.masmi-circle {\nwidth:180px; height:180px; flex-shrink:0;\nborder-radius:50%; background:#1769e0;\nborder:5px solid #8cc8ff;\nbox-shadow:0 8px 24px #00000040;\ndisplay:flex; flex-direction:column;\nalign-items:center; justify-content:center;\ntext-align:center;\n}\n.masmi-circle span {\ncolor:#ffffff !important;\nfont-size:24px; font-weight:800; line-height:1.3;\n}\n.masmi-circle small {\ncolor:#ffffff !important;\nfont-size:13px; margin-bottom:10px; letter-spacing:2px;\n}\n.masmi-banner h1 {\ncolor:#ffffff !important;\nfont-size:clamp(26px,3vw,40px); line-height:1.15;\n}\n.masmi-banner p {\ncolor:#e0efff !important; font-size:17px;\n}\n</style>\n<div class="masmi-banner">\n<div class="masmi-circle">\n<small>CREATED BY</small>\n<span>Abdelhafid<br>Masmi</span>\n</div>\n<div style="flex:1; min-width:220px;">\n<h1>Find your next grocery pick</h1>\n<p>Build your basket. Find products that go together.</p>\n</div>\n</div>', unsafe_allow_html=True)
-st.caption("v1 · Synthetic grocery data · Association rules · Abdelhafid Masmi")
+st.caption("v2 · Synthetic grocery data · Association rules · Abdelhafid Masmi")
 a,b,c = st.columns(3)
 a.metric("Shopping baskets", f"{transaction_count:,}")
 b.metric("Products", len(catalogue))
@@ -84,10 +91,10 @@ with st.sidebar:
 
 tab_basket, tab_learn = st.tabs(["🛒 Build my basket", "📖 Understand the recommendations"])
 with tab_basket:
-    st.write("Choose what you already have, then add any suggestions you like. Your basket updates immediately.")
+    st.write("Choose products on the left. On the right, select a matching rule and press Apply this rule. You can also add individual suggestions. Recommendations update automatically.")
     left_basket, right_suggestions = st.columns([1,1], gap="large")
     with left_basket:
-        st.subheader("Your basket")
+        st.subheader("1. Choose your products")
         if "basket" not in st.session_state:
             st.session_state.basket = []
 
@@ -101,17 +108,18 @@ with tab_basket:
         basket = st.multiselect("Products in your basket", catalogue, key="basket", placeholder="Choose one or more products…")
         st.caption(f"{len(basket)} product(s) selected. Suggestions exclude products already in your basket.")
 
-        st.markdown("**Or browse products**")
-        product_search = st.text_input("Find a product", placeholder="Search coffee, bread, milk…", key="browse_search")
-        available = [i for i in catalogue if i not in basket and product_search.casefold() in i.casefold()]
-        if available:
-            st.caption("Showing up to 8 products. Use the basket selector above to find any catalogue item.")
-            for item in available[:8]:
-                row = st.columns([3,1])
-                row[0].write(item)
-                row[1].button("Add",key="browse_"+item,on_click=set_basket,args=(basket+[item],),width="stretch")
-        else:
-            st.caption("No unselected products match your search.")
+        with st.expander("Browse and add products"):
+            st.markdown("**Or browse products**")
+            product_search = st.text_input("Find a product", placeholder="Search coffee, bread, milk…", key="browse_search")
+            available = [i for i in catalogue if i not in basket and product_search.casefold() in i.casefold()]
+            if available:
+                st.caption("Showing up to 8 products. Use the basket selector above to find any catalogue item.")
+                for item in available[:8]:
+                    row = st.columns([3,1])
+                    row[0].write(item)
+                    row[1].button("Add",key="browse_"+item,on_click=set_basket,args=(basket+[item],),width="stretch")
+            else:
+                st.caption("No unselected products match your search.")
     # Restrict the loaded rules without mining again.
     active_rules = [r for r in rules if r["confidence"] >= min_confidence and r["support"] >= min_support]
     matching = [r for r in active_rules if r["lift"] > min_lift
@@ -122,8 +130,43 @@ with tab_basket:
 
 
     with right_suggestions:
+        st.subheader("2. Choose and apply a rule")
+        if matching:
+            labels = []
+            for idx, rule in enumerate(matching):
+                left = ", ".join(sorted(rule["antecedents"]))
+                right = ", ".join(sorted(rule["consequents"]))
+                labels.append(f"{left} → {right} | lift {rule['lift']:.2f} | confidence {rule['confidence']:.0%}")
+            selected_index = st.selectbox("Rules that can be applied to this basket", range(len(matching)), format_func=lambda idx:labels[idx])
+            selected_rule = matching[selected_index]
+            new_items = sorted(selected_rule["consequents"] - set(basket))
+            with st.container(border=True):
+                st.markdown("**IF the basket contains:** " + ", ".join(sorted(selected_rule["antecedents"])))
+                st.markdown("**THEN suggest:** " + ", ".join(new_items))
+                x,y,z = st.columns(3)
+                x.metric("Lift", f"{selected_rule['lift']:.2f}×")
+                y.metric("Confidence", f"{selected_rule['confidence']:.1%}")
+                z.metric("Supporting baskets", f"{round(selected_rule['support']*transaction_count):,}")
+                st.caption(f"This rule occurs in {selected_rule['support']:.1%} of all baskets. Confidence describes observed co-purchases, not a guaranteed customer response.")
+                def apply_selected(current, suggested, label):
+                    set_basket(current + suggested)
+                    st.session_state.last_applied = label
+                st.button("Apply this rule · add " + ", ".join(new_items), type="primary", on_click=apply_selected,
+                          args=(basket,new_items,labels[selected_index]), width="stretch")
+            with st.expander(f"View all {len(matching):,} matching rules"):
+                rows = [{"If basket contains":", ".join(sorted(r["antecedents"])),
+                         "Then suggest":", ".join(sorted(r["consequents"])),
+                         "Lift":round(r["lift"],3),"Confidence (%)":round(r["confidence"]*100,2),
+                         "Support (%)":round(r["support"]*100,2)} for r in matching]
+                st.dataframe(pd.DataFrame(rows),hide_index=True,width="stretch")
+        else:
+            st.info("Choose an example basket above, or lower your filters, to find a matching rule.")
+        if st.session_state.get("last_applied"):
+            st.success("Last applied: " + st.session_state.last_applied)
+            st.caption("The added product is now in your basket. Matching rules and recommendations have been recalculated.")
+
         results = recommend(basket,active_rules,top_n,min_lift,mode == "Single-product suggestions")
-        st.subheader("Suggestions for you")
+        st.subheader("3. Add individual suggestions")
         if results:
             st.write("Add one suggestion using its button, or add the full recommended list.")
             st.button("Add all recommended products", type="primary", on_click=set_basket,
@@ -141,7 +184,7 @@ with tab_basket:
                             st.caption("Based on saved co-purchase patterns.")
                             if len(r["bundle"])>1:
                                 st.caption("Score belongs to the bundle: " + ", ".join(r["bundle"]))
-                            st.button("Add to basket", key="add_"+r["item"],on_click=set_basket,args=(basket+[r["item"]],),width="stretch")
+                        st.button("Add to basket", type="primary", key="add_"+r["item"],on_click=set_basket,args=(basket+[r["item"]],),width="stretch")
         else:
             if basket:
                 st.info("No association rule matches this basket and the selected filters. Here are some popular products instead.")
@@ -176,41 +219,6 @@ with tab_basket:
             st.caption("Showing up to 100 rules, ranked by lift.")
             st.download_button("Download saved rules JSON",data=rule_path.read_bytes(),file_name="association_rules.json",mime="application/json")
 
-        with st.expander("Advanced: inspect matching rules"):
-            st.subheader("Inspect and apply a rule")
-            if matching:
-                labels = []
-                for idx, rule in enumerate(matching):
-                    left = ", ".join(sorted(rule["antecedents"]))
-                    right = ", ".join(sorted(rule["consequents"]))
-                    labels.append(f"{left} → {right} | lift {rule['lift']:.2f} | confidence {rule['confidence']:.0%}")
-                selected_index = st.selectbox("Rules that can be applied to this basket", range(len(matching)), format_func=lambda idx:labels[idx])
-                selected_rule = matching[selected_index]
-                new_items = sorted(selected_rule["consequents"] - set(basket))
-                with st.container(border=True):
-                    st.markdown("**IF the basket contains:** " + ", ".join(sorted(selected_rule["antecedents"])))
-                    st.markdown("**THEN suggest:** " + ", ".join(new_items))
-                    x,y,z = st.columns(3)
-                    x.metric("Lift", f"{selected_rule['lift']:.2f}×")
-                    y.metric("Confidence", f"{selected_rule['confidence']:.1%}")
-                    z.metric("Supporting baskets", f"{round(selected_rule['support']*transaction_count):,}")
-                    st.caption(f"This rule occurs in {selected_rule['support']:.1%} of all baskets. Confidence describes observed co-purchases, not a guaranteed customer response.")
-                    def apply_selected(current, suggested, label):
-                        set_basket(current + suggested)
-                        st.session_state.last_applied = label
-                    st.button("Apply this rule · add " + ", ".join(new_items), type="primary", on_click=apply_selected,
-                              args=(basket,new_items,labels[selected_index]), width="stretch")
-                with st.expander(f"View all {len(matching):,} matching rules"):
-                    rows = [{"If basket contains":", ".join(sorted(r["antecedents"])),
-                             "Then suggest":", ".join(sorted(r["consequents"])),
-                             "Lift":round(r["lift"],3),"Confidence (%)":round(r["confidence"]*100,2),
-                             "Support (%)":round(r["support"]*100,2)} for r in matching]
-                    st.dataframe(pd.DataFrame(rows),hide_index=True,width="stretch")
-            else:
-                st.info("Choose an example basket above, or lower your filters, to find a matching rule.")
-            if st.session_state.get("last_applied"):
-                st.success("Last applied: " + st.session_state.last_applied)
-                st.caption("The added product is now in your basket. Matching rules and recommendations have been recalculated.")
 
 def bar_chart(frame, category, value, title, colour="#1769e0"):
     chart = alt.Chart(frame).mark_bar(color=colour, cornerRadiusEnd=3).encode(
