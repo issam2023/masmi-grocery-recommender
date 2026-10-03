@@ -117,7 +117,7 @@ with tab_basket:
         history = st.session_state.get("history", [])
         added = [i for i in final if i not in initial]
         st.success("Your basket is ready!")
-        st.header("🛒 Your finished grocery basket")
+        st.header("🎉 Your basket is ready to shine!")
         st.write("Prepared by you, with recommendations from Masmi’s grocery assistant.")
         a,b,c = st.columns(3)
         a.metric("Starting products", len(initial))
@@ -132,10 +132,10 @@ with tab_basket:
         for idx,item in enumerate(final):
             source = next((h["source"] for h in reversed(history) if item in h["products"]), "Your selection")
             columns[idx % 3].markdown('<div class="basket-card">'+product_photo(item)+'<h3>'+escape(item)+'</h3><span class="basket-pill">'+escape(source)+'</span></div>',unsafe_allow_html=True)
-        st.subheader("How your basket grew")
+        st.subheader("📊 Your basket journey")
         growth = pd.DataFrame({"Stage":["Starting basket","Final basket"], "Products":[len(initial),len(final)]})
         st.altair_chart(alt.Chart(growth).mark_bar(color="#174ea6",cornerRadiusTopLeft=8,cornerRadiusTopRight=8).encode(x=alt.X("Stage:N",sort=["Starting basket","Final basket"],title=None),y=alt.Y("Products:Q",axis=alt.Axis(tickMinStep=1)),tooltip=["Stage","Products"]).properties(height=230),width="stretch")
-        st.subheader("Why products were added")
+        st.subheader("💡 The story behind your picks")
         if history:
             for h in history:
                 with st.container(border=True):
@@ -462,3 +462,69 @@ div[data-testid="stButton"] button:focus-visible {
 </style>
 """, unsafe_allow_html=True)
 # END CLEAR BUTTON STYLE
+
+
+# MASMI_POLISHED_UI_START
+st.markdown("""
+<style>
+.stApp {
+    background:linear-gradient(135deg,#f8fafc,#eef4ff);
+    color:#172b4d;
+}
+.block-container {max-width:1220px;}
+h1,h2,h3 {letter-spacing:-0.5px;}
+section[data-testid="stSidebar"] {
+    background:#edf2fa;
+    border-right:1px solid #dce5f2;
+}
+.basket-card {
+    background:#fff;
+    border:1px solid #dbe5f3;
+    border-radius:22px;
+    padding:24px;
+    box-shadow:0 6px 22px rgba(25,55,100,0.07);
+    transition:transform .18s ease,box-shadow .18s ease;
+}
+.basket-card:hover {
+    transform:translateY(-4px);
+    box-shadow:0 12px 28px rgba(25,55,100,0.13);
+}
+.basket-card h3 {margin:18px 0 12px;}
+.basket-pill {
+    background:#e8f0ff;
+    color:#174ea6;
+    padding:7px 12px;
+    border-radius:30px;
+}
+div[data-testid="stMetric"] {
+    background:white;
+    border:1px solid #dbe5f3;
+    border-top:4px solid #3975db;
+    border-radius:18px;
+    box-shadow:0 4px 16px rgba(25,55,100,0.05);
+}
+div[data-testid="stMetricValue"] {color:#174ea6;}
+div[data-testid="stButton"] button,
+div[data-testid="stDownloadButton"] button {
+    transition:transform .15s ease,box-shadow .15s ease;
+}
+div[data-testid="stButton"] button:hover,
+div[data-testid="stDownloadButton"] button:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(23,78,166,0.20);
+}
+button:focus-visible {
+    outline:3px solid #f2b544 !important;
+    outline-offset:3px;
+}
+@media(prefers-reduced-motion:reduce) {
+    .basket-card,
+    div[data-testid="stButton"] button,
+    div[data-testid="stDownloadButton"] button {
+        transition:none;
+        transform:none !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+# MASMI_POLISHED_UI_END
