@@ -5,7 +5,7 @@ import pandas as pd
 import altair as alt
 import streamlit as st
 
-st.set_page_config(page_title="Masmi | Grocery recommender v3", page_icon="🛒", layout="wide")
+st.set_page_config(page_title="Masmi | Grocery recommender v4", page_icon="🛒", layout="wide")
 st.markdown('''<style>
 .stApp {background: #f7f8f4; color: #173e34;}
 .stApp p, .stApp label {color: #173e34;}
@@ -58,6 +58,60 @@ def recommend(basket, rules, top_n=3, min_lift=1.0, single_only=False):
                 best[item] = candidate
     return sorted(best.values(),key=lambda r:(-r["lift"],-r["confidence"],r["item"]))[:top_n]
 
+
+def product_image(item):
+    """Embedded product illustrations: no external image service required."""
+    import base64
+    from html import escape
+    styles = {
+        "2% Milk":("carton","#63a8ef","MILK 2%"), "Whole Milk":("carton","#e35d68","WHOLE MILK"),
+        "Beer":("bottle","#b87b23","BEER"), "Red Wine":("bottle","#752e52","RED WINE"),
+        "Sparkling Water":("bottle","#50a9c0","SPARKLING"), "Orange Juice":("carton","#f39c28","ORANGE JUICE"),
+        "Olive Oil":("bottle","#779148","OLIVE OIL"), "Truffle Oil":("bottle","#4b6440","TRUFFLE OIL"),
+        "Dish Soap":("bottle","#299bbb","DISH SOAP"), "Ketchup":("bottle","#d85046","KETCHUP"),
+        "Diapers":("diaper","#70a7e0","DIAPERS"), "Baby Wipes":("box","#59b8af","BABY WIPES"),
+        "Baby Food":("jar","#f2ac66","BABY FOOD"), "Butter":("box","#efd364","BUTTER"),
+        "Cheddar":("cheese","#efb43e","CHEDDAR"), "Parmesan":("cheese","#e4cf83","PARMESAN"),
+        "Yogurt":("jar","#bba1df","YOGURT"), "Tomato Sauce":("jar","#c85b4b","TOMATO SAUCE"),
+        "Coffee":("bag","#805d49","COFFEE"), "Tea":("box","#76a479","TEA"),
+        "Cereal":("box","#ee9d59","CEREAL"), "Rice":("bag","#d5bd91","RICE"),
+        "Pasta":("bag","#e0af48","PASTA"), "Potato Chips":("bag","#efb750","POTATO CHIPS"),
+        "Charcoal":("bag","#52606c","CHARCOAL"), "Saffron":("jar","#d79a43","SAFFRON"),
+        "Chocolate":("chocolate","#79503b","CHOCOLATE"), "Eggs":("eggs","#d8bba0","EGGS"),
+        "Bread":("bread","#ce934e","BREAD"), "Burger Buns":("bread","#e2aa66","BURGER BUNS"),
+        "Croissants":("bread","#d79445","CROISSANTS"), "Frozen Pizza":("pizza","#e6a34b","PIZZA"),
+        "Chicken Breast":("meat","#efb3a5","CHICKEN"), "Steak":("meat","#b85d66","STEAK"),
+        "Paper Towels":("roll","#91bfd4","PAPER TOWELS"), "Reusable Bag":("tote","#659f82","REUSABLE BAG"),
+        "Apples":("fruit","#d65454","APPLES"), "Tomatoes":("fruit","#e66a4c","TOMATOES"),
+        "Onions":("fruit","#c79767","ONIONS"), "Garlic":("fruit","#ddd1b5","GARLIC"),
+        "Bananas":("banana","#ebc844","BANANAS"), "Carrots":("carrot","#ed923e","CARROTS"),
+        "Cucumber":("vegetable","#58a572","CUCUMBER"), "Lettuce":("lettuce","#72b66c","LETTUCE"),
+    }
+    kind,c,label=styles[item]
+    forms={
+      "bottle":'<rect x="106" y="28" width="28" height="24" rx="5"/><path d="M104 50h32v26l18 23v92H86V99l18-23z"/>',
+      "carton":'<path d="M80 66l20-32h50l16 32v126H80z"/><path d="M80 66h86M100 34v32" stroke="white" stroke-width="4"/>',
+      "box":'<rect x="70" y="45" width="100" height="148" rx="12"/>',
+      "bag":'<path d="M82 40h76l12 153H70z"/><path d="M83 51h74" stroke="white" stroke-width="4"/>',
+      "jar":'<rect x="84" y="54" width="72" height="132" rx="16"/><rect x="81" y="44" width="78" height="20" rx="5"/>',
+      "diaper":'<path d="M57 70h126l-16 85-31 35h-32l-31-35z" fill="white" stroke="#70a7e0" stroke-width="6"/><path d="M73 87h94M77 129q43 32 86 0" stroke="#70a7e0" stroke-width="8" fill="none"/><rect x="49" y="80" width="35" height="24" rx="6"/><rect x="156" y="80" width="35" height="24" rx="6"/>',
+      "cheese":'<path d="M61 155l92-94 39 105-131 24z"/><g fill="#fff1ba"><circle cx="122" cy="130" r="10"/><circle cx="156" cy="154" r="9"/><circle cx="95" cy="160" r="7"/></g>',
+      "chocolate":'<rect x="75" y="43" width="90" height="147" rx="9"/><path d="M105 45v143M135 45v143M77 80h86M77 117h86M77 154h86" stroke="#a87959" stroke-width="5"/>',
+      "eggs":'<rect x="48" y="110" width="145" height="65" rx="15"/><g fill="#fff6e5" stroke="#b98f69" stroke-width="2"><ellipse cx="80" cy="105" rx="19" ry="30"/><ellipse cx="122" cy="99" rx="19" ry="30"/><ellipse cx="162" cy="105" rx="19" ry="30"/></g>',
+      "bread":'<rect x="45" y="85" width="150" height="85" rx="40"/><path d="M83 95l-9 35M121 92l-9 35M159 95l-9 35" stroke="#f8d59f" stroke-width="10" stroke-linecap="round"/>',
+      "pizza":'<circle cx="120" cy="120" r="74"/><circle cx="120" cy="120" r="62" fill="#f4d374"/><g fill="#be5044"><circle cx="95" cy="90" r="12"/><circle cx="150" cy="102" r="12"/><circle cx="117" cy="149" r="12"/></g>',
+      "meat":'<rect x="40" y="64" width="160" height="120" rx="20" fill="#dce4ec"/><path d="M64 105q13-52 68-18t42 62q-10 31-59 13t-51-57z"/><path d="M84 112q30-25 70 22" stroke="#fce4dc" stroke-width="9" fill="none"/>',
+      "roll":'<rect x="83" y="64" width="75" height="120" rx="12" fill="white" stroke="#91bfd4" stroke-width="4"/><ellipse cx="120" cy="65" rx="38" ry="15"/><ellipse cx="120" cy="65" rx="11" ry="6" fill="white"/>',
+      "tote":'<path d="M70 83h100l15 109H55z"/><path d="M94 88V60q26-38 52 0v28" fill="none" stroke="#659f82" stroke-width="10"/>',
+      "fruit":'<path d="M119 72q-46-26-58 28t38 75q21-10 41 0 49-16 38-73t-59-30z"/><path d="M120 73V48" stroke="#775937" stroke-width="7"/><ellipse cx="141" cy="52" rx="20" ry="9" fill="#65a365"/>',
+      "banana":'<path d="M64 62q23 88 116 71-30 86-104 30T64 62z"/><path d="M70 73q32 99 97 74" stroke="#fff0a0" stroke-width="6" fill="none"/>',
+      "carrot":'<path d="M80 87l91 22-75 88z"/><path d="M114 93l-7-49M120 94l27-43M109 92L84 54" stroke="#67a967" stroke-width="10"/>',
+      "vegetable":'<rect x="52" y="87" width="139" height="50" rx="25" transform="rotate(-30 120 120)"/><path d="M76 143l90-51" stroke="#a0d09f" stroke-width="5"/>',
+      "lettuce":'<g stroke="#4d9451" stroke-width="3"><circle cx="88" cy="115" r="38"/><circle cx="141" cy="110" r="44"/><circle cx="120" cy="146" r="43"/></g><path d="M120 184V91" stroke="#c7e8af" stroke-width="7"/>',
+    }
+    svg='<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" rx="24" fill="#f0f5fc"/><ellipse cx="120" cy="198" rx="76" ry="9" fill="#dde6f2"/><g fill="'+c+'">'+forms[kind]+'</g><rect x="49" y="202" width="142" height="26" rx="8" fill="white"/><text x="120" y="219" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#172b4d">'+escape(label)+'</text></svg>'
+    return 'data:image/svg+xml;base64,'+base64.b64encode(svg.encode()).decode()
+
 rule_path, csv_path = ROOT / "association_rules.json", ROOT / "transactions.csv"
 missing = [p.name for p in [rule_path, csv_path] if not p.is_file()]
 if missing:
@@ -70,7 +124,7 @@ except (ValueError, KeyError, TypeError, OSError) as exc:
     st.stop()
 
 st.markdown('<style>\n.masmi-banner {\ndisplay:flex; align-items:center; gap:32px; flex-wrap:wrap;\nbackground:linear-gradient(120deg,#102b50,#164b7a);\npadding:32px; border-radius:24px; margin-bottom:24px;\n}\n.masmi-circle {\nwidth:180px; height:180px; flex-shrink:0;\nborder-radius:50%; background:#1769e0;\nborder:5px solid #8cc8ff;\nbox-shadow:0 8px 24px #00000040;\ndisplay:flex; flex-direction:column;\nalign-items:center; justify-content:center;\ntext-align:center;\n}\n.masmi-circle span {\ncolor:#ffffff !important;\nfont-size:24px; font-weight:800; line-height:1.3;\n}\n.masmi-circle small {\ncolor:#ffffff !important;\nfont-size:13px; margin-bottom:10px; letter-spacing:2px;\n}\n.masmi-banner h1 {\ncolor:#ffffff !important;\nfont-size:clamp(26px,3vw,40px); line-height:1.15;\n}\n.masmi-banner p {\ncolor:#e0efff !important; font-size:17px;\n}\n</style>\n<div class="masmi-banner">\n<div class="masmi-circle">\n<small>CREATED BY</small>\n<span>Abdelhafid<br>Masmi</span>\n</div>\n<div style="flex:1; min-width:220px;">\n<h1>Find your next grocery pick</h1>\n<p>Build your basket. Find products that go together.</p>\n</div>\n</div>', unsafe_allow_html=True)
-st.caption("v3 · Synthetic grocery data · Association rules · Abdelhafid Masmi")
+st.caption("v4 · Synthetic grocery data · Association rules · Abdelhafid Masmi")
 a,b,c = st.columns(3)
 a.metric("Shopping baskets", f"{transaction_count:,}")
 b.metric("Products", len(catalogue))
@@ -114,7 +168,7 @@ with tab_basket:
         columns = st.columns(3)
         for idx,item in enumerate(final):
             source = next((h["source"] for h in reversed(history) if item in h["products"]), "Your selection")
-            columns[idx % 3].markdown('<div class="basket-card"><span style="font-size:30px">🛍️</span><h3>'+escape(item)+'</h3><span class="basket-pill">'+escape(source)+'</span></div>',unsafe_allow_html=True)
+            columns[idx % 3].markdown('<div class="basket-card"><img src="'+product_image(item)+'" alt="'+escape(item)+'" style="width:120px;height:120px;object-fit:contain"/><h3>'+escape(item)+'</h3><span class="basket-pill">'+escape(source)+'</span></div>',unsafe_allow_html=True)
         st.subheader("How your basket grew")
         growth = pd.DataFrame({"Stage":["Starting basket","Final basket"], "Products":[len(initial),len(final)]})
         st.altair_chart(alt.Chart(growth).mark_bar(color="#174ea6",cornerRadiusTopLeft=8,cornerRadiusTopRight=8).encode(x=alt.X("Stage:N",sort=["Starting basket","Final basket"],title=None),y=alt.Y("Products:Q",axis=alt.Axis(tickMinStep=1)),tooltip=["Stage","Products"]).properties(height=230),width="stretch")
@@ -245,6 +299,7 @@ with tab_basket:
                     for col,r in zip(cols,results[start:start+1]):
                         with col:
                             with st.container(border=True):
+                                st.image(product_image(r["item"]), width=120)
                                 st.subheader(r["item"])
                                 st.caption("Pairs with " + ", ".join(r["because"]))
                                 st.write("Customers buying **" + ", ".join(r["because"]) + "** also bought this product.")
@@ -266,6 +321,7 @@ with tab_basket:
                     for col,item in zip(cols,fallback[start:start+1]):
                         with col:
                             with st.container(border=True):
+                                st.image(product_image(item), width=120)
                                 st.subheader(item)
                                 st.write(f"In **{popularity[item]:.1%}** of baskets")
                                 st.button("Add to basket",key="popular_"+item,on_click=accept_products,args=([item],[{"source":"Popular pick", "products":[item], "rule":"Popularity fallback; no association rule applied"}]),width="stretch")
